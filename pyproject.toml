@@ -1,0 +1,10 @@
+[project]
+name = "glados-tts-build-kit"
+version = "0.1.0"
+description = "Source-only pipeline for building a personal GLaDOS-style TTS model from locally owned Portal game files."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

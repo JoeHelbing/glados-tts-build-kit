@@ -1,0 +1,8 @@
+{
+  "train": [
+    {
+      "manifest_path": ["data/omni/tokens/train/data.lst"]
+    }
+  ],
+  "dev": []
+}

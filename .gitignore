@@ -1,0 +1,20 @@
+data/
+.venv/
+__pycache__/
+*.pyc
+*.log
+*.pid
+.env
+.DS_Store
+
+# Keep generated/proprietary assets out of this repo.
+*.wav
+*.mp3
+*.flac
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.jsonl.bak
