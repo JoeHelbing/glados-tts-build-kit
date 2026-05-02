@@ -1,29 +1,36 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = ROOT / "scripts" / "12_omni_compare_server.py"
 
 
-def load_module():
+def load_module(checkpoint_root: Path | None = None):
     spec = importlib.util.spec_from_file_location("omni_compare_server", MODULE_PATH)
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
+    env = {}
+    if checkpoint_root is not None:
+        env["OMNI_COMPARE_CHECKPOINT_ROOT"] = str(checkpoint_root)
+    with patch.dict(os.environ, env):
+        spec.loader.exec_module(module)
     return module
 
 
 class OmniCompareServerTest(unittest.TestCase):
     def test_existing_comparison_matrix_has_five_prompts_and_selected_models(self):
-        module = load_module()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            module = load_module(Path(tmp_dir) / "checkpoints")
 
         matrix = module.comparison_matrix()
 
@@ -91,8 +98,8 @@ class OmniCompareServerTest(unittest.TestCase):
         self.assertEqual(selected[1]["eval_loss"], 3.7)
 
     def test_build_infer_command_matches_omni_voice_contract(self):
-        module = load_module()
         with tempfile.TemporaryDirectory() as tmp_dir:
+            module = load_module(Path(tmp_dir) / "checkpoints")
             out_path = Path(tmp_dir) / "sample.wav"
 
             command = module.build_infer_command(
@@ -108,7 +115,7 @@ class OmniCompareServerTest(unittest.TestCase):
         self.assertIn("omnivoice.cli.infer", command[2])
         self.assertEqual(
             command[command.index("--model") + 1],
-            str(ROOT / "data" / "omni" / "exp_finetune" / "checkpoint-2000"),
+            str(module.CHECKPOINT_ROOT / "checkpoint-2000"),
         )
         self.assertEqual(
             command[command.index("--text") + 1],
@@ -124,7 +131,8 @@ class OmniCompareServerTest(unittest.TestCase):
         self.assertEqual(command[command.index("--speed") + 1], "1.15")
 
     def test_generation_payload_parsers_validate_seeds_checkpoints_and_speed(self):
-        module = load_module()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            module = load_module(Path(tmp_dir) / "checkpoints")
 
         self.assertEqual(module.parse_seed_list("42, 43 44,42"), [42, 43, 44])
         self.assertEqual(
@@ -141,8 +149,8 @@ class OmniCompareServerTest(unittest.TestCase):
             module.parse_speed("2.0")
 
     def test_eval_records_validate_and_summarize_by_checkpoint(self):
-        module = load_module()
         with tempfile.TemporaryDirectory() as tmp_dir:
+            module = load_module(Path(tmp_dir) / "checkpoints")
             eval_path = Path(tmp_dir) / "eval.jsonl"
             module.write_eval_record(
                 eval_path,
@@ -193,8 +201,8 @@ class OmniCompareServerTest(unittest.TestCase):
         self.assertEqual(summary["checkpoint-1500"]["artifacts_avg"], 1.5)
 
     def test_eval_record_rejects_out_of_range_scores(self):
-        module = load_module()
         with tempfile.TemporaryDirectory() as tmp_dir:
+            module = load_module(Path(tmp_dir) / "checkpoints")
             eval_path = Path(tmp_dir) / "eval.jsonl"
             with self.assertRaises(ValueError):
                 module.write_eval_record(
