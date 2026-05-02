@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 DEFAULT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT = DEFAULT_ROOT / "data" / "reconciliation.jsonl"
+DEFAULT_INPUT = DEFAULT_ROOT / "data" / "manifest.jsonl"
 DEFAULT_OUTPUT = DEFAULT_ROOT / "data" / "omni_train.jsonl"
 
 

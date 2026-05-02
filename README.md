@@ -18,17 +18,82 @@ This repository intentionally does not include Valve game assets, extracted audi
 | OmniVoice training and inference | `scripts/10_train_omnivoice.sh`, `scripts/11_omni_infer.sh` |
 | Local evaluation UI | `scripts/12_omni_compare_server.py` |
 
+## Goal
+
+This repo is a source-only build kit. A user who owns Portal and Portal 2 should be able to point the repo at their local game files and external ML checkouts, then run one command to produce a local fine-tuned voice model. Copyrighted Valve audio, extracted clips, transcripts, token shards, samples, logs, and checkpoints stay under ignored `data/` paths and must not be committed.
+
 ## Prerequisites
 
 - Portal and Portal 2 installed locally through Steam.
 - `uv`.
 - `ffmpeg` and `ffprobe`.
 - `vpk` CLI: `uv tool install vpk`.
-- CohereX cloned separately for transcription: `git clone https://github.com/Diffio-AI/CohereX.git ~/git/CohereX && cd ~/git/CohereX && uv sync`.
-- OmniVoice cloned separately for training/inference.
+- CohereX cloned separately for transcription:
+  `git clone https://github.com/Diffio-AI/CohereX.git ~/git/CohereX && cd ~/git/CohereX && uv sync`.
+- OmniVoice cloned separately for training/inference, with its virtualenv available at `.venv/bin/python`.
 - An NVIDIA GPU is strongly recommended for transcription and training.
 
-## Pipeline
+## One-Command Training
+
+Copy the local config template and edit paths if your machine differs from the defaults:
+
+```bash
+cp config/pipeline.env.example config/pipeline.env
+$EDITOR config/pipeline.env
+```
+
+Then run:
+
+```bash
+bash scripts/train_glados_tts.sh
+```
+
+The wrapper runs:
+
+1. Extract local Portal/Portal 2 voice assets.
+2. Convert Source MP3-in-WAV files to 24 kHz mono PCM.
+3. Transcribe clips with CohereX.
+4. Scrape Portal Wiki canonical transcripts.
+5. Reconcile transcripts and filter unusable clips.
+6. Build training manifests.
+7. Convert the manifest to OmniVoice JSONL.
+8. Tokenize and train OmniVoice.
+
+Important local settings live in `config/pipeline.env`:
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `STEAM_COMMON` | Steam `steamapps/common` directory | `$HOME/.local/share/Steam/steamapps/common` |
+| `COHEREX_DIR` | CohereX checkout | `$HOME/git/CohereX` |
+| `OMNI` | OmniVoice checkout | `$HOME/git/OmniVoice` |
+| `GPU_IDS` / `NUM_GPUS` | CUDA devices for training | `0` / `1` |
+| `PAR` / `BATCH` | Transcode and transcription parallelism | `8` / `32` |
+| `REVIEW_MODE` | `auto` for one-command training, `manual` to stop for browser review | `auto` |
+| `STAGE` / `STOP_STAGE` | OmniVoice stages: `0` tokenization, `1` training | `0` / `1` |
+
+Use `bash scripts/train_glados_tts.sh --dry-run` to confirm paths and commands before starting expensive work.
+
+## Manual Review Mode
+
+The default `REVIEW_MODE=auto` trains from the reconciled/wiki-filtered dataset. To inspect flagged clips before training:
+
+```bash
+REVIEW_MODE=manual bash scripts/train_glados_tts.sh
+uv run python -m http.server -d data 8765
+```
+
+Open `http://127.0.0.1:8765/review.html`, export decisions, then apply and train:
+
+```bash
+uv run python scripts/08_apply_review.py --decisions ~/Downloads/review_decisions.json
+uv run python scripts/04_build_manifest.py
+uv run python scripts/09_convert_manifest.py --overwrite
+OMNI="$HOME/git/OmniVoice" STAGE=0 STOP_STAGE=1 bash scripts/10_train_omnivoice.sh
+```
+
+## Individual Stages
+
+The wrapper above is the recommended path. These commands are useful for debugging one stage at a time.
 
 Set `STEAM_COMMON` if Steam is not under the Linux default:
 
@@ -47,7 +112,7 @@ Open `http://127.0.0.1:8765/review.html`, export decisions, then apply them:
 ```bash
 uv run python scripts/08_apply_review.py --decisions ~/Downloads/review_decisions.json
 uv run python scripts/04_build_manifest.py
-uv run python scripts/09_convert_manifest.py
+uv run python scripts/09_convert_manifest.py --overwrite
 ```
 
 ## OmniVoice

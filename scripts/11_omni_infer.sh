@@ -24,6 +24,14 @@ PYTHON="${PYTHON:-$OMNI/.venv/bin/python}"
 
 mkdir -p "$OUT_DIR"
 
+ROOT="$(cd "$ROOT" && pwd)"
+OMNI="$(cd "$OMNI" && pwd)"
+CHECKPOINT="$(cd "$(dirname "$CHECKPOINT")" && pwd)/$(basename "$CHECKPOINT")"
+OUT_DIR="$(cd "$OUT_DIR" && pwd)"
+REF_AUDIO="$(cd "$(dirname "$REF_AUDIO")" && pwd)/$(basename "$REF_AUDIO")"
+PROMPTS="$(cd "$(dirname "$PROMPTS")" && pwd)/$(basename "$PROMPTS")"
+PYTHON="$(cd "$(dirname "$PYTHON")" && pwd)/$(basename "$PYTHON")"
+
 # Read each prompt and generate a wav
 "$PYTHON" -c "
 import json, subprocess, sys, time

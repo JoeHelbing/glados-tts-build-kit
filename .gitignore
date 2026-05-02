@@ -5,7 +5,14 @@ __pycache__/
 *.log
 *.pid
 .env
+config/pipeline.env
 .DS_Store
+.agents/
+.beads/
+.codex/
+.pytest_cache/
+.serena/
+tests/
 
 # Keep generated/proprietary assets out of this repo.
 *.wav
@@ -18,3 +25,8 @@ __pycache__/
 *.ckpt
 *.onnx
 *.jsonl.bak
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key

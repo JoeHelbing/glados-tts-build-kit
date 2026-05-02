@@ -11,6 +11,9 @@ PAR="${PAR:-8}"
 
 command -v ffmpeg >/dev/null || { echo "ERROR: ffmpeg not installed" >&2; exit 1; }
 [[ -d "$IN" ]] || { echo "ERROR: input dir $IN missing; run 01_extract_vpks.sh first" >&2; exit 1; }
+IN="$(cd "$IN" && pwd)"
+mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 
 cd "$IN"
 echo "Transcoding from $IN -> $OUT (24kHz mono PCM, parallelism=$PAR)"

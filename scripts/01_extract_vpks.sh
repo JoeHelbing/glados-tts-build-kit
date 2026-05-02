@@ -18,6 +18,7 @@ done
 command -v vpk >/dev/null || { echo "ERROR: vpk CLI not installed. Run: uv tool install vpk" >&2; exit 1; }
 
 mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 cd "$OUT"
 
 echo "[1/3] Portal 2 glados/ ..."
