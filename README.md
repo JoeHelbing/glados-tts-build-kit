@@ -2,6 +2,8 @@
 
 Source-only pipeline for building a personal GLaDOS-style TTS model from local Portal and Portal 2 game files.
 
+Writeup of the training process with examples audio clips: [Training a Local GLaDOS TTS Voice](https://www.joehelbing.net/post/glados-tts)
+
 This repository intentionally does not include Valve game assets, extracted audio, transcripts, token shards, generated samples, or trained checkpoints. You provide the installed game files and run the pipeline locally.
 
 ## What Is Included
