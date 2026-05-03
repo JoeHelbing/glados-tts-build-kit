@@ -6,6 +6,20 @@ Writeup of the training process with examples audio clips: [Training a Local GLa
 
 This repository intentionally does not include Valve game assets, extracted audio, transcripts, token shards, generated samples, or trained checkpoints. You provide the installed game files and run the pipeline locally.
 
+## Notes on Hardware
+
+Total VRAM use during training was 17,942 MiB on an NVIDIA 3090
+
+The VRAM usage related settings for the training I did used the below values, which changing some of these could likely get the full fine-tune pipeline down a bit to fit on a 16GB card:
+```text
+batch_tokens: 2048  
+max_sample_tokens: 1500  
+max_batch_size: 16  
+gradient_accumulation_steps: 4
+```
+
+My suggestion for a 16GB card would be to set `batch_tokens` to `1024` and set `gradient_accumulation_steps` to `8`.
+
 ## What Is Included
 
 | Stage | Files |
